@@ -1,0 +1,358 @@
+const HAPPINESS = [
+    ["Economy", "GDP per capita", [], "", [], "#ebc700"], 
+    ["Family", "Social support", [], "", [], "#ff6bb3"], 
+    ["Health", "Healthy life expectancy", ["SP.DYN.LE00.IN", "SP.DYN.LE00.FE.IN", "SP.DYN.LE00.MA.IN"], "SP.DYN.LE00.IN", ["#b86bb6", "#d66d84", "#6d9cd6"], "#2abf3b"], 
+    ["Freedom", "Freedom to make life choices", [], "", [], "#6392ff"], 
+    ["Generosity", "Generosity", [], "", [], "#8f5eff"], 
+    ["Trust", "Perceptions of corruption", [], "", [], "#ff4d36"], 
+    ["Residual", "Residual", [], "", [], "#999999"]
+];
+
+function ready(data) {
+    let selectedYear = 2019;
+    
+    $("#overlay").hide();
+    
+    $(".overlay-bg").on("click", function() {
+        $(this).parent().hide();
+    });
+    
+    let happinessData = Country.allCountries2.map(function(x) {
+        let d1 = data[Country.alpha3(x)];
+        d1 = d1 && d1["Happiness"];
+
+        return {
+            id: x,
+            name: Country.name(x),
+            value2015: d1 && d1[2015],
+            value2016: d1 && d1[2016],
+            value2017: d1 && d1[2017],
+            value2018: d1 && d1[2018],
+            value2019: d1 && d1[2019]
+        };
+    });
+    
+    let l1XAxis = line1.xAxes.push(new am4charts.DateAxis());
+    l1XAxis.dateFormats.setKey("year", "yyyy");
+    line1.yAxes.push(new am4charts.ValueAxis());
+    l1XAxis.dataFields.date = "date";
+    
+    let valuesH = line1.series.push(new am4charts.LineSeries());
+    valuesH.dataFields.valueY = "valueHappiness";
+    valuesH.dataFields.dateX = "date";   
+    valuesH.tooltipText = `({year}) Happiness Index: {valueHappiness}`;
+    
+    let segmentH = valuesH.segments.template;
+    valuesH.stroke = am4core.color("#000099");
+    segmentH.interactionsEnabled = true;
+    segmentH.states.create("hover").properties.strokeWidth = 5;
+    
+    let _k = 0;
+    HAPPINESS.map(([key, name, _, __, ___, color]) => {
+        let values = line1.series.push(new am4charts.LineSeries());
+        values.dataFields.valueY = "value" + key;
+        values.dataFields.dateX = "date";   
+        values.tooltipText = `({year}) ${name}: {value${key}}`;
+        
+        
+        values.events.on("over", (_ => function(ev) {
+            let f = radar.series.getIndex(1)._columns.getIndex(_);
+            f.fill = am4core.color(HAPPINESS[_][5]);
+            f.fillOpacity = 0.5; 
+            f.strokeWidth = 1;    
+        })(_k));
+        values.events.on("out", (_ => function(ev) {
+            let f = radar.series.getIndex(1)._columns.getIndex(_);
+            f.fillOpacity = 0; 
+            f.strokeWidth = 0;               
+        })(_k));
+        
+        let segment = values.segments.template;
+        values.stroke = am4core.color(color);
+        segment.strokeWidth = 1;
+        segment.interactionsEnabled = true;
+        segment.states.create("hover").properties.strokeWidth = 5;
+        
+        _k++;
+    });
+    line1.cursor.maxTooltipDistance = -1;
+
+    function loadYearMap(year) {
+        $(".switch-btn", "#map_year").removeClass("default");
+        $("#_" + year).addClass("default");
+        polygons.data = happinessData.map(x => ({id: x.id, name: x.name, value: x["value" + year]}));
+    }
+
+    let radarCatAxis = radar.xAxes.push(new am4charts.CategoryAxis());
+    radarCatAxis.dataFields.category = "name";
+    radarCatAxis.cursorTooltipEnabled = false;
+    let radarValAxis = radar.yAxes.push(new am4charts.ValueAxis());
+    radarValAxis.dataFields.data = "value";
+    let radarValues = radar.series.push(new am4charts.RadarSeries());
+    radarValues.dataFields.valueY = "value";
+    radarValues.dataFields.categoryX = "name";
+    radarValues.tooltipText = `{name}: {value}`;
+    radarValues.strokeWidth = 3;
+    radarValues.strokeOpacity = 0.7;
+    radarValues.fill = am4core.color("#a3c3ff");
+    radarValues.fillOpacity = 0.4;
+    let radarValues2 = radar.series.push(new am4charts.RadarColumnSeries());
+    radarValues2.dataFields.valueY = "value";
+    radarValues2.dataFields.categoryX = "name";
+    radarValues2.fill = am4core.color("#a3c3ff");
+    radarValues2.fillOpacity = 0;
+    radarValues2.strokeWidth = 0;
+
+    radar.cursor = new am4charts.RadarCursor();
+    radar.cursor.maxTooltipDistance = -1;
+
+    polygons.mapPolygons.template.events.on("hit", function(ev) {
+        let data2 = ev.target.dataItem.dataContext || {};
+        if (data2.value) {
+            radar.series.getIndex(0).stroke = radar.series.getIndex(0).fill = ev.target.fill;
+            $("#radar_title").html(`${data2.name}: ${data2.value}`);
+            $("#radar_overlay").show();
+            
+            function loadYear(year) {
+                let countryData = data[Country.alpha3(data2.id)] || {};
+                radar.data = HAPPINESS.map(([key, name]) => ({
+                    name, 
+                    value: countryData[key] && countryData[key][year]
+                }));
+                
+                line1.data = [2015, 2016, 2017, 2018, 2019].map(function(x) {
+                    let a = {
+                        date: new Date(x, 0),
+                        year: x,
+                        name,
+                        valueHappiness: countryData["Happiness"] && countryData["Happiness"][x]
+                    };
+                    HAPPINESS.map(([key, name]) => a["value" + key] = countryData[key] && countryData[key][x]);
+                    return a;
+                });
+            }
+            loadYear(selectedYear);
+        }
+    }, this);
+    
+    polygons.heatRules.push({
+        property: "fill",
+        target: polygons.mapPolygons.template,
+        min: am4core.color("#2d436b"),
+        max: am4core.color("#a3c3ff")
+    });
+
+    let legend = map.createChild(am4charts.HeatLegend);
+    legend.series = polygons;
+    legend.position = "bottom";
+    legend.width = am4core.percent(100);
+    
+    let l2XAxis = line2.xAxes.push(new am4charts.DateAxis());
+    l2XAxis.dateFormats.setKey("year", "yyyy");
+    l2XAxis.dataFields.date = "date";
+    l2XAxis.gridIntervals.setAll([
+        {timeUnit: "year", count: 1},
+        {timeUnit: "year", count: 5},
+        {timeUnit: "year", count: 10}
+    ]);
+    line2.yAxes.push(new am4charts.ValueAxis());
+    
+    let l2Values = line2.series.push(new am4charts.LineSeries());
+    l2Values.dataFields.dateX = "date";
+    l2Values.dataFields.valueY = "value";
+    l2Values.tooltipText = `({year}) {countryName}: {valueY}`;
+    l2Values.legendSettings.itemValueText = "{countryName}";
+    l2Values.stroke = am4core.color("#75d0e0");
+    l2Values = line2.series.push(new am4charts.LineSeries());
+    l2Values.dataFields.dateX = "date";
+    l2Values.dataFields.valueY = "valueWorld";
+    l2Values.tooltipText = `({year}) World: {valueY}`;
+    l2Values.legendSettings.itemValueText = "World";
+    l2Values.stroke = am4core.color("#4c87cf");
+    line2.legend.data = [
+        {name: "", fill: am4core.color("#75d0e0")},
+        {name: "World", fill: am4core.color("#4c87cf")},
+    ];
+    
+    let compoCatAxis = compo.yAxes.push(new am4charts.CategoryAxis());
+    compoCatAxis.dataFields.category = "name";
+    compoCatAxis.tooltipText = "({order}) {name}: {Happiness}";
+    compo.xAxes.push(new am4charts.ValueAxis());
+    
+    compo.legend.data = HAPPINESS.map(([key, name, subItems, main, subColor, color]) => {
+        let values = compo.series.push(new am4charts.ColumnSeries());
+        values.stacked = true;
+        values.dataFields.categoryY = "name";
+        values.dataFields.valueX = key;
+        values.tooltipText = `${name}: {valueX}`;
+        values.tooltip.pointerOrientation = "left";
+        values.columns.template.fill = am4core.color(color);
+        
+        values.columns.template.events.on("hit", function(ev) {
+            if (subItems.length > 0) {
+                $(`#detail_overlay`).show();
+                let countryData = data[Country.alpha3(ev.target.dataItem.dataContext.id)] || {};
+                let countryName = Country.name(ev.target.dataItem.dataContext.id);
+                detail.xAxes.clear();
+                detail.yAxes.clear();
+                detail.series.clear();
+                
+                line2.legend.data[0].name = countryName;
+                line2.legend.data = line2.legend.data;
+                
+                detail.data = subItems.map(x => ({
+                    id: x,
+                    name: INDICATORS[x],
+                    countryName,
+                    value: countryData[x] && countryData[x][selectedYear],
+                    valueWorld: data["WLD"][x] && data["WLD"][x][selectedYear]
+                }));
+                
+                let showScore = ev.target.dataItem.dataContext[key];
+                
+                function loadIndicatorEvent(ev) {
+                    loadIndicator(ev.target.dataItem.dataContext.id);
+                }
+                
+                let catAxis = detail.xAxes.push(new am4charts.CategoryAxis());
+                catAxis.dataFields.category = "name";
+                let dValAxis = detail.yAxes.push(new am4charts.ValueAxis());
+                dValAxis.min = 0;
+                let dValues = detail.series.push(new am4charts.ColumnSeries());
+                dValues.dataFields.categoryX = "name";
+                dValues.dataFields.valueY = "value";
+                dValues.columns.template.tooltipText = `${countryName}\n[bold]{valueY}`;
+                dValues.columns.template.showTooltipOn = "always";
+                dValues.tooltip.pointerOrientation = "down";
+                dValues.columns.template.fill = am4core.color("#75d0e0");
+                dValues.columns.template.events.on("hit", loadIndicatorEvent);
+                
+                dValues = detail.series.push(new am4charts.ColumnSeries());
+                dValues.dataFields.categoryX = "name";
+                dValues.dataFields.valueY = "valueWorld";
+                dValues.columns.template.tooltipText = `World\n[bold]{valueY}`;
+                dValues.columns.template.showTooltipOn = "always";
+                dValues.tooltip.pointerOrientation = "down";
+                dValues.columns.template.fill = am4core.color("#4c87cf");
+                dValues.columns.template.events.on("hit", loadIndicatorEvent);
+                
+                function loadIndicator(indicator) {
+                    $("#detail_title").html(
+                        `${name} rating for ${countryName}: ${(+showScore).toFixed(3)}
+<div class="explained">
+    Explained by ${INDICATORS[indicator]} = ${countryData[indicator] && (+countryData[indicator][selectedYear]).toFixed(1)}
+</div>`
+                    );
+
+                    if (countryData[indicator]) {
+                        $("#line2").show();
+                        line2.data = Object.keys(countryData[indicator]).sort((a, b) => a - b).map(x => ({
+                            date: new Date(+x, 0),
+                            year: +x,
+                            countryName,
+                            value: countryData[indicator] && countryData[indicator][x],
+                            valueWorld: data["WLD"][indicator] && data["WLD"][indicator][x]
+                        }));
+                    }
+                    else 
+                        $("#line2").hide();
+                    
+                }
+                loadIndicator(main);
+            }
+        });
+        return {name, fill: am4core.color(color)};
+    });
+    
+    compo.events.on("datavalidated", function(ev) {
+        let height = compo.data.length * 40;
+        compo.svgContainer.htmlElement.style.height = (height + 150) + "px";
+        compo.yAxes.getIndex(0).height = height;
+    });
+    
+    function setComponentsYear(year) {
+        let sort = $("#order").val();
+        
+        for (let i = 0; i < 7; i++) {
+            if (compo.series.getIndex(i).dataFields.valueX == sort) {
+                compo.series.moveValue(compo.series.getIndex(i), 0);
+                break;
+            }
+        }
+        
+        let temp = Country.allCountries2.map(function(x) {
+            let d1 = data[Country.alpha3(x)], _d1 = d1;
+            d1 = d1 && d1["Happiness"],
+            d1 = d1 && d1[year];
+            
+            if (d1) {
+                let result = {
+                    id: x,
+                    name: Country.name(x),
+                    Happiness: d1
+                };
+                HAPPINESS.map(([key, name]) => result[key] = _d1[key][year]);
+                return result;
+            }
+        }).filter(x => x).sort((a, b) => a[sort] - b[sort]);
+        
+        let order = temp.length;
+        for (let i of temp) {
+            i.order = order + "thstndrd".substr(
+                (order / 10 |0) % 10 == 1 || order % 10 == 0 || order % 10 > 3 ? 0 : order % 10 * 2,
+                2
+            );
+            order--;
+        }
+        compo.data = temp;
+    }
+    $("#order").on("change", function() {
+        setComponentsYear(selectedYear);
+    });
+    
+    $(".switch-btn", "#map_year").on("click", function() {
+        selectedYear = this.id.slice(1);
+        loadYearMap(selectedYear);
+        setComponentsYear(selectedYear);
+    });
+    $("#_2019").trigger("click");
+}
+
+function fetchData() {
+    showOverlayMessage("Loading data source...");
+    fetch("data_source.json")
+        .then(x => x.json())
+        .then(function(sources) {
+            let allData = {};
+            let length = sources.length;
+            let nowNum = 0;
+            function readSource() {
+                let jsonPath = sources.pop();
+                if (jsonPath) {
+                    showOverlayMessage(`Loading JSON files... (${++nowNum}/${length})`);
+                    fetch(jsonPath)
+                        .then(x => x.json())
+                        .then(function(data) {
+                            function deepAssign(target, source) {
+                                for (let i in source) {
+                                    if (source[i] instanceof Object) {
+                                        if (!target[i])
+                                            target[i] = {};
+                                        deepAssign(target[i], source[i]);
+                                    }
+                                    else
+                                        target[i] = source[i];
+                                }
+                            }
+                            deepAssign(allData, data);
+                            readSource();
+                        })
+                        .catch(readSource);
+                }
+                else
+                    ready(allData);
+            }
+            readSource();
+        })
+        .catch(console.error);
+}

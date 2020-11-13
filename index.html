@@ -1,0 +1,73 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+        <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
+        <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
+        <script src="https://cdn.amcharts.com/lib/4/maps.js"></script>
+        <script src="https://cdn.amcharts.com/lib/4/themes/material.js"></script>
+        <script src="https://cdn.amcharts.com/lib/4/lang/en_US.js"></script>
+        <script src="https://cdn.amcharts.com/lib/4/geodata/worldLow.js"></script>
+        <script src="https://cdn.amcharts.com/lib/4/fonts/notosans-sc.js"></script>
+        <script src="js/indicators.js"></script>
+        <script src="js/countryCode.js"></script>
+        <script src="js/dataSource.js"></script>
+        <script src="js/main.js"></script>
+        <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
+        <link rel="stylesheet" href="css/main.css">
+    </head>
+    <body>
+        <div id="map" class="charts"></div>
+        <div id="compo" class="charts">
+            <div id="compo_real"></div>
+            <div id="order_container">
+                <div>Sorted by:</div>
+                <select id="order">
+                    <option value="Happiness" selected>Happiness Index</option>
+                    <option value="Economy">GDP per capita</option>
+                    <option value="Family">Social support</option>
+                    <option value="Health">Healthy life expectancy</option>
+                    <option value="Freedom">Freedom to make life choices</option>
+                    <option value="Generosity">Generosity</option>
+                    <option value="Trust">Perceptions of corruption</option>
+                    <option value="Residual">Residual</option>
+                </select>
+            </div>
+        </div>
+        <div id="nav" class="nav">
+            <button id="_map" class="switch-btn ui-button ui-widget ui-corner-all">Overview</button>
+            <button id="_compo" class="switch-btn ui-button ui-widget ui-corner-all">Components</button>
+        </div>
+        <div id="map_year" class="nav">
+            <button id="_2015" class="switch-btn ui-button ui-widget ui-corner-all">2015</button>
+            <button id="_2016" class="switch-btn ui-button ui-widget ui-corner-all">2016</button>
+            <button id="_2017" class="switch-btn ui-button ui-widget ui-corner-all">2017</button>
+            <button id="_2018" class="switch-btn ui-button ui-widget ui-corner-all">2018</button>
+            <button id="_2019" class="switch-btn ui-button ui-widget ui-corner-all">2019</button>
+        </div>
+        <div id="radar_overlay" class="overlay">
+            <div id="radar_bg" class="overlay-bg"></div>
+            <div id="radar_base" class="overlay-base">
+                <div id="radar_title" class="overlay-title"></div>
+                <div class="col2">
+                    <div id="radar" class="inner-chart"></div>
+                    <div id="line1" class="inner-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div id="detail_overlay" class="overlay">
+            <div id="detail_bg" class="overlay-bg"></div>
+            <div id="detail_base" class="overlay-base">
+                <div id="detail_title" class="overlay-title"></div>
+                <div class="col2">
+                    <div id="detail" class="inner-chart"></div>
+                    <div id="line2" class="inner-chart"></div>
+                </div>
+            </div>
+        </div>
+        <div id="overlay" class="overlay">
+            <div>Initializing...</div>
+        </div>
+    </body>
+</html>

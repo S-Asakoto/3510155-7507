@@ -1,0 +1,109 @@
+* {
+    column-break-inside:avoid;
+    box-sizing: content-box;
+    
+}
+
+.overlay {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+#overlay div {
+    color: #fff;
+    font-size: 2rem;
+}
+
+.overlay-bg {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+}
+
+.overlay-base {
+    position: relative;
+    width: 90vw;
+    height: 80vh;
+    padding: 1rem;
+    background: #eee;
+}
+
+.col2 {
+    column-count: 2;
+    column-gap: 0.5rem;
+    position:absolute;
+    left: 1rem;
+    right: 1rem;
+    top: 6rem;
+    bottom: 1rem;
+}
+
+.overlay-base::after {
+    position: absolute;
+    left: 50%;
+    bottom: -2rem;
+    font-size: 1rem;
+    color: #fff;
+    transform: translateX(-50%);
+    content: "Click outside the chart area to close";
+}
+
+.overlay-title {
+    font-size: 2.2rem;
+    text-align: center;
+    font-weight: 700;
+}
+
+.explained {
+    font-size: 1.6rem;
+}
+
+.charts {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 60px;
+    bottom: 0;
+    padding: 1rem;
+}
+
+.nav {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.inner-chart {
+    width: 100%;
+}
+
+#nav {
+    top: 1rem;
+}
+
+#map_year {
+    bottom: 1rem;
+}
+
+.nav .default {
+    filter: invert(1);
+}
+
+#compo {
+    overflow-y: scroll;
+}
+
+#order_container {
+    position: absolute;
+    left: 1rem;
+    top: 1.5rem;
+}
