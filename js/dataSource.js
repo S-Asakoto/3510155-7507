@@ -44,7 +44,10 @@ const HAPPINESS = [
         "ef_score"
     ], "hf_score", [], "#6392ff"], 
     ["Generosity", "Generosity", [
-        "World Giving Index"
+        "World Giving Index",
+        "helping",
+        "donating",
+        "volunteer"
     ], "World Giving Index", [], "#8f5eff"], 
     ["Trust", "Trust", [
         "Corruption Perceptions Index",
