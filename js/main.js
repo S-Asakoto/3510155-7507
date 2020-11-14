@@ -20,9 +20,32 @@ $(document).ready(function() {
 	map.geodata = am4geodata_worldLow;
 	polygons = new am4maps.MapPolygonSeries();
 	polygons.useGeodata = true;
+    polygons.calculateVisualCenter = true;
 	polygons.exclude = ["AQ"];
+    
 	map.series.push(polygons);
-
+      
+    /*
+    let labelSeries = map.series.push(new am4maps.MapImageSeries());
+    let labels = labelSeries.mapImages.template.createChild(am4core.Label);
+    labels.horizontalCenter = "middle";
+    labels.verticalCenter = "middle";
+    labels.fontSize = 10;
+    labels.nonScaling = true;
+    labels.interactionsEnabled = false;
+  
+    polygons.events.on("inited", function() {
+        polygons.mapPolygons.each(function(polygon) {
+            let label = labelSeries.mapImages.create();
+            label.zIndex = 1;
+            label.latitude = polygon.visualLatitude;
+            label.longitude = polygon.visualLongitude;
+            label.showOnInit = false;
+            label.children.getIndex(0).text = Country.name(polygon.dataItem.dataContext.id); 
+        });        
+    });
+    */
+    
 	let hs = polygons.mapPolygons.template.states.create("hover");
 	hs.properties.fill = am4core.color("#0a3fa3");
 

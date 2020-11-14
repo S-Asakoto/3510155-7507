@@ -34,48 +34,10 @@ function ready(data) {
     
     let l1XAxis = line1.xAxes.push(new am4charts.DateAxis());
     l1XAxis.dateFormats.setKey("year", "yyyy");
-    line1.yAxes.push(new am4charts.ValueAxis());
     l1XAxis.dataFields.date = "date";
-    
-    let valuesH = line1.series.push(new am4charts.LineSeries());
-    valuesH.dataFields.valueY = "valueHappiness";
-    valuesH.dataFields.dateX = "date";   
-    valuesH.tooltipText = `({year}) Happiness Index: {valueHappiness}`;
-    
-    let segmentH = valuesH.segments.template;
-    valuesH.stroke = am4core.color("#000099");
-    segmentH.interactionsEnabled = true;
-    segmentH.states.create("hover").properties.strokeWidth = 5;
-    
-    let _k = 0;
-    HAPPINESS.map(([key, name, _, __, ___, color]) => {
-        let values = line1.series.push(new am4charts.LineSeries());
-        values.dataFields.valueY = "value" + key;
-        values.dataFields.dateX = "date";   
-        values.tooltipText = `({year}) ${name}: {value${key}}`;
-        
-        
-        values.events.on("over", (_ => function(ev) {
-            let f = radar.series.getIndex(1)._columns.getIndex(_);
-            f.fill = am4core.color(HAPPINESS[_][5]);
-            f.fillOpacity = 0.5; 
-            f.strokeWidth = 1;    
-        })(_k));
-        values.events.on("out", (_ => function(ev) {
-            let f = radar.series.getIndex(1)._columns.getIndex(_);
-            f.fillOpacity = 0; 
-            f.strokeWidth = 0;               
-        })(_k));
-        
-        let segment = values.segments.template;
-        values.stroke = am4core.color(color);
-        segment.strokeWidth = 1;
-        segment.interactionsEnabled = true;
-        segment.states.create("hover").properties.strokeWidth = 5;
-        
-        _k++;
-    });
-    line1.cursor.maxTooltipDistance = -1;
+    let l1YAxis = line1.yAxes.push(new am4charts.ValueAxis());
+    l1YAxis.max = 10;
+    l1YAxis.min = 0;
 
     function loadYearMap(year) {
         $(".switch-btn", "#map_year").removeClass("default");
@@ -88,34 +50,51 @@ function ready(data) {
     radarCatAxis.cursorTooltipEnabled = false;
     let radarValAxis = radar.yAxes.push(new am4charts.ValueAxis());
     radarValAxis.dataFields.data = "value";
+    radarValAxis.max = 3;
+    radarValAxis.min = 0;
     let radarValues = radar.series.push(new am4charts.RadarSeries());
     radarValues.dataFields.valueY = "value";
     radarValues.dataFields.categoryX = "name";
     radarValues.tooltipText = `{name}: {value}`;
     radarValues.strokeWidth = 3;
     radarValues.strokeOpacity = 0.7;
-    radarValues.fill = am4core.color("#a3c3ff");
     radarValues.fillOpacity = 0.4;
     let radarValues2 = radar.series.push(new am4charts.RadarColumnSeries());
     radarValues2.dataFields.valueY = "value";
     radarValues2.dataFields.categoryX = "name";
-    radarValues2.fill = am4core.color("#a3c3ff");
     radarValues2.fillOpacity = 0;
     radarValues2.strokeWidth = 0;
+    let radarValues3 = radar.series.push(new am4charts.RadarSeries());
+    radarValues3.dataFields.valueY = "valueCompare";
+    radarValues3.dataFields.categoryX = "name";
+    radarValues3.tooltipText = `{name}: {valueCompare}`;
+    radarValues3.strokeWidth = 3;
+    radarValues3.strokeOpacity = 0.7;
+    radarValues3.fill = radarValues3.stroke = am4core.color("#990000");
+    radarValues3.fillOpacity = 0.4;
 
     radar.cursor = new am4charts.RadarCursor();
     radar.cursor.maxTooltipDistance = -1;
+    
+    for (let i of Country.allCountries2) {
+        let a = document.createElement("option");
+        a.value = i;
+        a.innerText = Country.name(i);
+        $("#compare").append(a);
+    }
 
+    polygons.mapPolygons.template.tooltipText = "{name}";
     polygons.mapPolygons.template.events.on("hit", function(ev) {
         let data2 = ev.target.dataItem.dataContext || {};
-        if (data2.value) {
+        if (data2.value) {            
             radar.series.getIndex(0).stroke = radar.series.getIndex(0).fill = ev.target.fill;
             $("#radar_title").html(`${data2.name}: ${data2.value}`);
             $("#radar_overlay").show();
-            
+                
             function loadYear(year) {
                 let countryData = data[Country.alpha3(data2.id)] || {};
                 radar.data = HAPPINESS.map(([key, name]) => ({
+                    key,
                     name, 
                     value: countryData[key] && countryData[key][year]
                 }));
@@ -130,8 +109,133 @@ function ready(data) {
                     HAPPINESS.map(([key, name]) => a["value" + key] = countryData[key] && countryData[key][x]);
                     return a;
                 });
+                
+                loadComparison($("#compare").off("change").on("change", function() {
+                    loadComparison(this.value);
+                }).val("").val());
             }
             loadYear(selectedYear);
+            
+            
+            function loadComparison(b) {
+                line1.series.clear();
+                
+                if (b && happinessData.find(x => x.id == b)["value" + selectedYear]) {
+                    let c = data[Country.alpha3(b)] || {};
+                    
+                    for (let i of radar.data)
+                        i.valueCompare = c && c[i.key] && c[i.key][selectedYear];                        
+                    for (let i = 0; i < 5; i++)
+                        line1.data[i].valueCompare = c && c.Happiness && c.Happiness[2015 + i];
+                    
+                    radar.data = radar.data;
+                    line1.data = line1.data;
+                    
+                    let valuesH = line1.series.push(new am4charts.LineSeries());
+                    valuesH.dataFields.valueY = "valueHappiness";
+                    valuesH.dataFields.dateX = "date";   
+                    valuesH.tooltipText = `({year}) ${Country.name(data2.id)}: {valueHappiness}`;
+                    
+                    valuesH.events.on("over", function(ev) {
+                        radar.series.getIndex(0).strokeWidth = 5;
+                    });
+                    valuesH.events.on("out", function(ev) {
+                        radar.series.getIndex(0).strokeWidth = 1;
+                    });
+                    
+                    let segmentH = valuesH.segments.template;
+                    valuesH.stroke = ev.target.fill;
+                    valuesH.strokeWidth = 1;
+                    segmentH.interactionsEnabled = true;
+                    segmentH.states.create("hover").properties.strokeWidth = 5;
+                    
+                    valuesH = line1.series.push(new am4charts.LineSeries());
+                    valuesH.dataFields.valueY = "valueCompare";
+                    valuesH.dataFields.dateX = "date";   
+                    valuesH.tooltipText = `({year}) ${Country.name(b)}: {valueCompare}`;
+                    
+                    valuesH.events.on("over", function(ev) {
+                        radar.series.getIndex(2).strokeWidth = 5;
+                    });
+                    valuesH.events.on("out", function(ev) {
+                        radar.series.getIndex(2).strokeWidth = 1;
+                    });
+                    
+                    segmentH = valuesH.segments.template;
+                    valuesH.stroke = am4core.color("#990000");
+                    valuesH.strokeWidth = 1;
+                    segmentH.interactionsEnabled = true;
+                    segmentH.states.create("hover").properties.strokeWidth = 5;
+                    
+                    line1.legend.data = [
+                        {name: Country.name(data2.id), fill: ev.target.fill},
+                        {name: Country.name(b), fill: am4core.color("#990000")}
+                    ];
+                }
+                else {
+                    for (let i of radar.data)
+                        delete i.valueCompare;
+                    for (let i = 0; i < 5; i++)
+                        delete line1.data[i].valueCompare;
+                    
+                    radar.data = radar.data;
+                    line1.data = line1.data;
+                    
+                    let valuesH = line1.series.push(new am4charts.LineSeries());
+                    valuesH.dataFields.valueY = "valueHappiness";
+                    valuesH.dataFields.dateX = "date";   
+                    valuesH.tooltipText = `({year}) Happiness Index: {valueHappiness}`;
+                    
+                    valuesH.events.on("over", function(ev) {
+                        radar.series.getIndex(0).strokeWidth = 5;
+                    });
+                    valuesH.events.on("out", function(ev) {
+                        radar.series.getIndex(0).strokeWidth = 1;
+                    });
+                    
+                    let segmentH = valuesH.segments.template;
+                    valuesH.stroke = ev.target.fill;
+                    segmentH.interactionsEnabled = true;
+                    segmentH.states.create("hover").properties.strokeWidth = 5;
+                    
+                    let _k = 0;
+                    HAPPINESS.map(([key, name, _, __, ___, color]) => {
+                        let values = line1.series.push(new am4charts.LineSeries());
+                        values.dataFields.valueY = "value" + key;
+                        values.dataFields.dateX = "date";   
+                        values.tooltipText = `({year}) ${name}: {value${key}}`;
+                        
+                        
+                        values.events.on("over", (_ => function(ev) {
+                            let f = radar.series.getIndex(1)._columns.getIndex(_);
+                            f.fill = am4core.color(HAPPINESS[_][5]);
+                            f.fillOpacity = 0.5; 
+                            f.strokeWidth = 1;    
+                        })(_k));
+                        values.events.on("out", (_ => function(ev) {
+                            let f = radar.series.getIndex(1)._columns.getIndex(_);
+                            f.fillOpacity = 0; 
+                            f.strokeWidth = 0;               
+                        })(_k));
+                        
+                        let segment = values.segments.template;
+                        values.stroke = am4core.color(color);
+                        valuesH.strokeWidth = 1;
+                        values.tooltip.background.fill = values.stroke;
+                        segment.strokeWidth = 1;
+                        segment.interactionsEnabled = true;
+                        segment.states.create("hover").properties.strokeWidth = 5;
+                        
+                        _k++;
+                    });
+                    line1.cursor.maxTooltipDistance = -1;
+                    
+                    line1.legend.data = [
+                        {name: "Happiness", fill: ev.target.fill},
+                        ...HAPPINESS.map(x => ({name: x[1], fill: am4core.color(x[5])}))
+                    ];
+                }
+            }
         }
     }, this);
     
