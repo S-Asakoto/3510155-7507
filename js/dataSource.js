@@ -1,10 +1,53 @@
 const HAPPINESS = [
-    ["Economy", "GDP per capita", [], "", [], "#ebc700"], 
-    ["Family", "Social support", [], "", [], "#ff6bb3"], 
-    ["Health", "Healthy life expectancy", ["SP.DYN.LE00.IN", "SP.DYN.LE00.FE.IN", "SP.DYN.LE00.MA.IN"], "SP.DYN.LE00.IN", ["#b86bb6", "#d66d84", "#6d9cd6"], "#2abf3b"], 
-    ["Freedom", "Freedom to make life choices", [], "", [], "#6392ff"], 
+    ["Economy", "Economy", [
+        "NY.GDP.PCAP.KD", 
+        "SI.POV.GINI", 
+        "EG.USE.PCAP.KG.OE", 
+        "SL.UEM.TOTL.FE.NE.ZS", 
+        "SL.UEM.TOTL.MA.NE.ZS"
+    ], "NY.GDP.PCAP.KD", [], "#ebc700"], 
+    ["Family", "Society", [
+        "per_si_allsi.adq_pop_tot", 
+        "per_allsp.adq_pop_tot", 
+        "per_sa_allsa.adq_pop_tot", 
+        "per_lm_alllm.adq_pop_tot",
+        "GC.XPN.TRFT.ZS",
+        "SH.STA.SUIC.P5",
+        "SH.STA.SUIC.FE.P5",
+        "SH.STA.SUIC.MA.P5",
+        "IC.LGL.CRED.XQ"
+    ], "per_allsp.adq_pop_tot", [], "#ff6bb3"], 
+    ["Health", "Health", [
+        "SP.DYN.LE00.IN", 
+        "SP.DYN.LE00.FE.IN", 
+        "SP.DYN.LE00.MA.IN", 
+        "SL.UEM.TOTL.NE.ZS",
+        "SH.STA.AIRP.P5",
+        "SH.STA.POIS.P5",
+        "SH.XPD.CHEX.PC.CD"
+    ], "SP.DYN.LE00.IN", [], "#2abf3b"], 
+    ["Freedom", "Freedom", [
+        "hf_score", 
+        "pf_rol", 
+        "pf_ss", 
+        "pf_movement", 
+        "pf_religion", 
+        "pf_association", 
+        "pf_expression", 
+        "pf_identity", 
+        "pf_score", 
+        "ef_government", 
+        "ef_legal", 
+        "ef_money", 
+        "ef_trade", 
+        "ef_regulation", 
+        "ef_score"
+    ], "hf_score", [], "#6392ff"], 
     ["Generosity", "Generosity", [], "", [], "#8f5eff"], 
-    ["Trust", "Perceptions of corruption", [], "", [], "#ff4d36"], 
+    ["Trust", "Trust", [
+        "Corruption Perceptions Index",
+        "IQ.CPA.TRAN.XQ"
+    ], "Corruption Perceptions Index", [], "#ff4d36"], 
     ["Residual", "Residual", [], "", [], "#999999"]
 ];
 
@@ -83,7 +126,7 @@ function ready(data) {
         $("#compare").append(a);
     }
 
-    polygons.mapPolygons.template.tooltipText = "{name}";
+    polygons.mapPolygons.template.tooltipText = "{name}: [bold]{value}[/]";
     polygons.mapPolygons.template.events.on("hit", function(ev) {
         let data2 = ev.target.dataItem.dataContext || {};
         if (data2.value) {            
@@ -259,7 +302,8 @@ function ready(data) {
         {timeUnit: "year", count: 5},
         {timeUnit: "year", count: 10}
     ]);
-    line2.yAxes.push(new am4charts.ValueAxis());
+    let l2YAxis = line2.yAxes.push(new am4charts.ValueAxis());
+    l2YAxis.min = 0;
     
     let l2Values = line2.series.push(new am4charts.LineSeries());
     l2Values.dataFields.dateX = "date";
@@ -267,12 +311,36 @@ function ready(data) {
     l2Values.tooltipText = `({year}) {countryName}: {valueY}`;
     l2Values.legendSettings.itemValueText = "{countryName}";
     l2Values.stroke = am4core.color("#75d0e0");
+    l2Values.strokeWidth = 1;
+    let l2S = l2Values.segments.template;
+    l2S.interactionsEnabled = true;
+    l2S.states.create("hover").properties.strokeWidth = 5;
+    
+    l2Values.events.on("over", function(ev) {
+        detail.series.getIndex(0)._columns.getIndex(0).strokeWidth = 5;    
+    });
+    l2Values.events.on("out", function(ev) {
+        detail.series.getIndex(0)._columns.getIndex(0).strokeWidth = 1;    
+    });
+                        
     l2Values = line2.series.push(new am4charts.LineSeries());
     l2Values.dataFields.dateX = "date";
     l2Values.dataFields.valueY = "valueWorld";
     l2Values.tooltipText = `({year}) World: {valueY}`;
     l2Values.legendSettings.itemValueText = "World";
     l2Values.stroke = am4core.color("#4c87cf");
+    l2Values.strokeWidth = 1;
+    l2S = l2Values.segments.template;
+    l2S.interactionsEnabled = true;
+    l2S.states.create("hover").properties.strokeWidth = 5;
+    
+    l2Values.events.on("over", function(ev) {
+        detail.series.getIndex(0)._columns.getIndex(1).strokeWidth = 5;    
+    });
+    l2Values.events.on("out", function(ev) {
+        detail.series.getIndex(0)._columns.getIndex(1).strokeWidth = 1;    
+    });
+    
     line2.legend.data = [
         {name: "", fill: am4core.color("#75d0e0")},
         {name: "World", fill: am4core.color("#4c87cf")},
@@ -282,6 +350,20 @@ function ready(data) {
     compoCatAxis.dataFields.category = "name";
     compoCatAxis.tooltipText = "({order}) {name}: {Happiness}";
     compo.xAxes.push(new am4charts.ValueAxis());
+    
+    let dCatAxis = detail.xAxes.push(new am4charts.CategoryAxis());
+    dCatAxis.dataFields.category = "name";
+    let dValAxis = detail.yAxes.push(new am4charts.ValueAxis());
+    dValAxis.min = 0;
+    let dValues = detail.series.push(new am4charts.ColumnSeries());
+    dValues.dataFields.categoryX = "name";
+    dValues.dataFields.valueY = "value";
+    dValues.columns.template.tooltipText = `{categoryX}\n[bold]{valueY}`;
+    dValues.tooltip.pointerOrientation = "down";
+    dValues.columns.template.propertyFields.fill = "fill";
+    dValues.columns.template.propertyFields.stroke = "fill";
+    dValues.columns.template.strokeWidth = 1;
+    dValues.columns.template.fillOpacity = 0.7;
     
     compo.legend.data = HAPPINESS.map(([key, name, subItems, main, subColor, color]) => {
         let values = compo.series.push(new am4charts.ColumnSeries());
@@ -297,56 +379,48 @@ function ready(data) {
                 $(`#detail_overlay`).show();
                 let countryData = data[Country.alpha3(ev.target.dataItem.dataContext.id)] || {};
                 let countryName = Country.name(ev.target.dataItem.dataContext.id);
-                detail.xAxes.clear();
-                detail.yAxes.clear();
-                detail.series.clear();
                 
                 line2.legend.data[0].name = countryName;
                 line2.legend.data = line2.legend.data;
                 
-                detail.data = subItems.map(x => ({
-                    id: x,
-                    name: INDICATORS[x],
-                    countryName,
-                    value: countryData[x] && countryData[x][selectedYear],
-                    valueWorld: data["WLD"][x] && data["WLD"][x][selectedYear]
-                }));
+                /*
+                detail.data = [countryName, "World"].map(function(x) {
+                    let a = {name: x};
+                    let r = x == "World" ? data["WLD"] : countryData;
+                    subItems.map(y => a[y] = r[y] && r[y][selectedYear] || undefined);
+                    return a;
+                });*/
                 
                 let showScore = ev.target.dataItem.dataContext[key];
                 
-                function loadIndicatorEvent(ev) {
-                    loadIndicator(ev.target.dataItem.dataContext.id);
-                }
-                
-                let catAxis = detail.xAxes.push(new am4charts.CategoryAxis());
-                catAxis.dataFields.category = "name";
-                let dValAxis = detail.yAxes.push(new am4charts.ValueAxis());
-                dValAxis.min = 0;
-                let dValues = detail.series.push(new am4charts.ColumnSeries());
-                dValues.dataFields.categoryX = "name";
-                dValues.dataFields.valueY = "value";
-                dValues.columns.template.tooltipText = `${countryName}\n[bold]{valueY}`;
-                dValues.columns.template.showTooltipOn = "always";
-                dValues.tooltip.pointerOrientation = "down";
-                dValues.columns.template.fill = am4core.color("#75d0e0");
-                dValues.columns.template.events.on("hit", loadIndicatorEvent);
-                
-                dValues = detail.series.push(new am4charts.ColumnSeries());
-                dValues.dataFields.categoryX = "name";
-                dValues.dataFields.valueY = "valueWorld";
-                dValues.columns.template.tooltipText = `World\n[bold]{valueY}`;
-                dValues.columns.template.showTooltipOn = "always";
-                dValues.tooltip.pointerOrientation = "down";
-                dValues.columns.template.fill = am4core.color("#4c87cf");
-                dValues.columns.template.events.on("hit", loadIndicatorEvent);
+                $("#indicator").empty();
+                subItems.map(function(x) {
+                    let a = document.createElement("option");
+                    a.value = x;
+                    a.innerText = INDICATORS[x];
+                    $("#indicator").append(a);
+                });
                 
                 function loadIndicator(indicator) {
                     $("#detail_title").html(
-                        `${name} rating for ${countryName}: ${(+showScore).toFixed(3)}
+                        `${name} rating for ${countryName}: ${(+showScore).toFixed(3)}${countryData[indicator] && countryData[indicator][selectedYear] ? `
 <div class="explained">
     Explained by ${INDICATORS[indicator]} = ${countryData[indicator] && (+countryData[indicator][selectedYear]).toFixed(1)}
-</div>`
+</div>`: ""}`
                     );
+                    
+                    detail.data = [
+                        {
+                            name: countryName, 
+                            value: countryData[indicator] && countryData[indicator][selectedYear] || undefined, 
+                            fill: line2.legend.data[0].fill
+                        },
+                        {
+                            name: "World", 
+                            value: data["WLD"][indicator] && data["WLD"][indicator][selectedYear] || undefined,
+                            fill: line2.legend.data[1].fill
+                        }                    
+                    ];
 
                     if (countryData[indicator]) {
                         $("#line2").show();
@@ -354,15 +428,18 @@ function ready(data) {
                             date: new Date(+x, 0),
                             year: +x,
                             countryName,
-                            value: countryData[indicator] && countryData[indicator][x],
-                            valueWorld: data["WLD"][indicator] && data["WLD"][indicator][x]
+                            value: countryData[indicator] && countryData[indicator][x] || undefined,
+                            valueWorld: data["WLD"][indicator] && data["WLD"][indicator][x] || undefined
                         }));
                     }
                     else 
                         $("#line2").hide();
                     
                 }
-                loadIndicator(main);
+                
+                loadIndicator($("#indicator").off("change").on("change", function() {
+                    loadIndicator(this.value);
+                }).val(main).val());
             }
         });
         return {name, fill: am4core.color(color)};
