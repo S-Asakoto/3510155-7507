@@ -3,6 +3,7 @@ const HAPPINESS = [
         "NY.GDP.PCAP.KD", 
         "SI.POV.GINI", 
         "EG.USE.PCAP.KG.OE", 
+        "SL.UEM.TOTL.NE.ZS",
         "SL.UEM.TOTL.FE.NE.ZS", 
         "SL.UEM.TOTL.MA.NE.ZS"
     ], "NY.GDP.PCAP.KD", [], "#ebc700"], 
@@ -21,7 +22,6 @@ const HAPPINESS = [
         "SP.DYN.LE00.IN", 
         "SP.DYN.LE00.FE.IN", 
         "SP.DYN.LE00.MA.IN", 
-        "SL.UEM.TOTL.NE.ZS",
         "SH.STA.AIRP.P5",
         "SH.STA.POIS.P5",
         "SH.XPD.CHEX.PC.CD"
