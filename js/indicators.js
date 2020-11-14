@@ -36,5 +36,6 @@ const INDICATORS = {
     "ef_regulation": "Score on regulations",
     "ef_score": "Score economic freedom",
     "Corruption Perceptions Index": "Corruption Perceptions Index",
-    "IQ.CPA.TRAN.XQ": "Transparency, accountability, and corruption rating (1=low to 6=high)"
+    "IQ.CPA.TRAN.XQ": "Transparency, accountability, and corruption rating (1=low to 6=high)",
+    "World Giving Index": "Donation rate (%)"
 }

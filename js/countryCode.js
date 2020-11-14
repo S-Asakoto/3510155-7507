@@ -214,10 +214,10 @@ const Country = (function() {
 	Svalbard and Jan Mayen;SJ;SJM;744
 	Sweden;SE;SWE;752
 	Switzerland;CH;CHE;756
-	Syrian Arab Republic;SY;SYR;760
+	Syria;SY;SYR;760
 	Taiwan;TW;TWN;158
 	Tajikistan;TJ;TJK;762
-	Tanzania, United Republic of;TZ;TZA;834
+	Tanzania;TZ;TZA;834
 	Thailand;TH;THA;764
 	Timor-Leste;TL;TLS;626
 	Togo;TG;TGO;768
@@ -247,7 +247,8 @@ const Country = (function() {
 	Yemen;YE;YEM;887
 	Zambia;ZM;ZMB;894
 	Zimbabwe;ZW;ZWE;716
-	Åland Islands;AX;ALA;248`.split`
+	Åland Islands;AX;ALA;248
+    Kosovo;XK;XKX;`.split`
 	`.map(x => x.trim().split`;`);
 
 	function findTarget(source, sourceCol, targetCol) {

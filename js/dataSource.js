@@ -43,7 +43,9 @@ const HAPPINESS = [
         "ef_regulation", 
         "ef_score"
     ], "hf_score", [], "#6392ff"], 
-    ["Generosity", "Generosity", [], "", [], "#8f5eff"], 
+    ["Generosity", "Generosity", [
+        "World Giving Index"
+    ], "World Giving Index", [], "#8f5eff"], 
     ["Trust", "Trust", [
         "Corruption Perceptions Index",
         "IQ.CPA.TRAN.XQ"
@@ -93,7 +95,7 @@ function ready(data) {
     radarCatAxis.cursorTooltipEnabled = false;
     let radarValAxis = radar.yAxes.push(new am4charts.ValueAxis());
     radarValAxis.dataFields.data = "value";
-    radarValAxis.max = 3;
+    radarValAxis.max = 4;
     radarValAxis.min = 0;
     let radarValues = radar.series.push(new am4charts.RadarSeries());
     radarValues.dataFields.valueY = "value";
