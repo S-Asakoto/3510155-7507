@@ -129,6 +129,7 @@ function ready(data) {
         a.value = i;
         a.innerText = Country.name(i);
         $("#compare").append(a);
+        $("#compare2").append(a.cloneNode(true));
     }
 
     polygons.mapPolygons.template.tooltipText = "{name}: [bold]{value}[/]";
@@ -406,13 +407,19 @@ function ready(data) {
                     $("#indicator").append(a);
                 });
                 
-                function loadIndicator(indicator) {
+                function loadIndicator(indicator, country) {
                     $("#detail_title").html(
                         `${name} rating for ${countryName}: ${(+showScore).toFixed(3)}${countryData[indicator] && countryData[indicator][selectedYear] ? `
 <div class="explained">
     Explained by ${INDICATORS[indicator]} = ${countryData[indicator] && (+countryData[indicator][selectedYear]).toFixed(1)}
 </div>`: ""}`
                     );
+                    
+                    line2.legend.data = line2.legend.data.slice(0, 2);
+                    try {
+                        line2.series.removeIndex(2);
+                    }
+                    catch (e) {}
                     
                     detail.data = [
                         {
@@ -424,7 +431,7 @@ function ready(data) {
                             name: "World", 
                             value: data["WLD"][indicator] && data["WLD"][indicator][selectedYear] || undefined,
                             fill: line2.legend.data[1].fill
-                        }                    
+                        }
                     ];
 
                     if (countryData[indicator]) {
@@ -440,11 +447,50 @@ function ready(data) {
                     else 
                         $("#line2").hide();
                     
+                    if (country) {
+                        let comparedCountryData = data[Country.alpha3(country)] || {};
+                        
+                        detail.data.push({
+                            name: Country.name(country),
+                            value: comparedCountryData[indicator] && comparedCountryData[indicator][selectedYear] || undefined,
+                            fill: am4core.color("#e07575")
+                        });
+                        detail.data = detail.data;
+                        
+                        let _l2Values = line2.series.push(new am4charts.LineSeries());
+                        _l2Values.dataFields.dateX = "date";
+                        _l2Values.dataFields.valueY = "valueCompare";
+                        _l2Values.tooltipText = `({year}) ${Country.name(country)}: {valueY}`;
+                        _l2Values.stroke = am4core.color("#e07575");
+                        _l2Values.strokeWidth = 1;
+                        let _l2S = l2Values.segments.template;
+                        _l2S.interactionsEnabled = true;
+                        _l2S.states.create("hover").properties.strokeWidth = 5;
+                        
+                        _l2Values.events.on("over", function(ev) {
+                            detail.series.getIndex(0)._columns.getIndex(2).strokeWidth = 5;    
+                        });
+                        _l2Values.events.on("out", function(ev) {
+                            detail.series.getIndex(0)._columns.getIndex(2).strokeWidth = 1;    
+                        });
+                        
+                        for (let j of line2.data)
+                            j.valueCompare = comparedCountryData[indicator] && comparedCountryData[indicator][j.year] || undefined;
+                        line2.data = line2.data;
+                        line2.legend.data = line2.legend.data.slice(0, 2);
+                        line2.legend.data.push({name: Country.name(country), fill: am4core.color("#e07575")});
+                        line2.legend.data = line2.legend.data;
+                    }
+                    
                 }
                 
+                $("#compare2").val("");
                 loadIndicator($("#indicator").off("change").on("change", function() {
-                    loadIndicator(this.value);
-                }).val(main).val());
+                    loadIndicator(this.value, $("#compare2").val());
+                }).val(main).val(), $("#compare2").off("change").on("change", function() {
+                    loadIndicator($("#indicator").val(), this.value);
+                }));
+                
             }
         });
         return {name, fill: am4core.color(color)};
